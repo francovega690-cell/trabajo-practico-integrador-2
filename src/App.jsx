@@ -1,9 +1,7 @@
+import AppRouter from './router/AppRouter'
+
 const App = () => {
-  return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <h1 className="text-3xl font-bold text-indigo-600">Blog Personal</h1>
-    </main>
-  )
+  return <AppRouter />
 }
 
 export default App
