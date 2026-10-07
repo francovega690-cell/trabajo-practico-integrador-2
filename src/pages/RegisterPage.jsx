@@ -83,7 +83,7 @@ const RegisterPage = () => {
                   className={inputClasses}
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Mínimo 8 caracteres, con mayúscula, minúscula y número.
+                  Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.
                 </p>
               </div>
             </div>
