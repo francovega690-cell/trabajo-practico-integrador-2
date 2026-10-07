@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useForm } from '../hooks/useForm'
 
 const LOGIN_URL = 'http://localhost:5501/api/auth/login'
@@ -11,6 +11,9 @@ const fieldMessages = {
 
 const LoginPage = () => {
   const navigate = useNavigate()
+
+  const { state } = useLocation()
+  const successMessage = state?.successMessage
 
   const { formState, handleInputChange } = useForm({
     email: '',
@@ -78,6 +81,12 @@ const LoginPage = () => {
       <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg sm:p-8">
         <h1 className="text-center text-2xl font-bold text-slate-800">Iniciar sesión</h1>
         <p className="mt-1 text-center text-sm text-slate-500">Ingresá a tu blog personal</p>
+
+        {successMessage && !errorMessage && (
+          <p className="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {successMessage}
+          </p>
+        )}
 
         {errorMessage && (
           <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

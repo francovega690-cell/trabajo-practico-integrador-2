@@ -1,12 +1,31 @@
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { useForm } from '../hooks/useForm'
+
+const REGISTER_URL = 'http://localhost:5501/api/auth/register'
+
+const fieldMessages = {
+  username: 'El nombre de usuario debe tener entre 3 y 20 caracteres, solo letras y números.',
+  email: 'Ingresá un email válido.',
+  password:
+    'La contraseña debe tener al menos 8 caracteres, con mayúscula, minúscula, número y símbolo.',
+  firstName: 'El nombre debe tener entre 2 y 50 letras.',
+  lastName: 'El apellido debe tener entre 2 y 50 letras.',
+  birthDate: 'La fecha de nacimiento no es válida.',
+  avatarUrl: 'La URL del avatar no es válida.',
+  biography: 'La biografía no puede superar los 500 caracteres.',
+}
+
+const optionalFields = ['birthDate', 'avatarUrl', 'biography']
 
 const inputClasses =
   'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200'
 const labelClasses = 'block text-sm font-medium text-slate-700'
 
 const RegisterPage = () => {
-  const { formState, handleInputChange } = useForm({
+  const navigate = useNavigate()
+
+  const { formState, handleInputChange, handleReset } = useForm({
     username: '',
     email: '',
     password: '',
@@ -19,8 +38,73 @@ const RegisterPage = () => {
   const { username, email, password, firstName, lastName, birthDate, avatarUrl, biography } =
     formState
 
-  const handleSubmit = (event) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [validationErrors, setValidationErrors] = useState([])
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
+
+    setIsLoading(true)
+    setErrorMessage('')
+    setValidationErrors([])
+
+    const body = Object.fromEntries(
+      Object.entries(formState).filter(
+        ([field, value]) => !(optionalFields.includes(field) && value.trim() === ''),
+      ),
+    )
+
+    try {
+      const response = await fetch(REGISTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        handleReset()
+        navigate('/login', {
+          replace: true,
+          state: { successMessage: '¡Cuenta creada con éxito! Ya podés iniciar sesión.' },
+        })
+        return
+      }
+
+      if (response.status === 400) {
+        if (data.errors) {
+          const fields = [...new Set(data.errors.map((error) => error.path))]
+          setValidationErrors(
+            fields.map((field) => ({
+              field,
+              message: fieldMessages[field] ?? `El campo ${field} no es válido.`,
+            })),
+          )
+          return
+        }
+
+        setErrorMessage(data.message)
+        return
+      }
+
+      if (response.status === 401) {
+        setErrorMessage('No autorizado. Volvé a intentarlo.')
+        return
+      }
+
+      if (response.status === 403) {
+        setErrorMessage('No tenés permisos para realizar esta acción.')
+        return
+      }
+
+      setErrorMessage('Ocurrió un error en el servidor. Intentá más tarde.')
+    } catch {
+      setErrorMessage('No se pudo conectar con el servidor.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -30,6 +114,23 @@ const RegisterPage = () => {
         <p className="mt-1 text-center text-sm text-slate-500">
           Completá tus datos para empezar a escribir
         </p>
+
+        {errorMessage && (
+          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </p>
+        )}
+
+        {validationErrors.length > 0 && (
+          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="font-semibold">Revisá los siguientes campos:</p>
+            <ul className="mt-2 list-inside list-disc space-y-1">
+              {validationErrors.map((error) => (
+                <li key={error.field}>{error.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-6">
           <fieldset className="space-y-4">
@@ -173,9 +274,13 @@ const RegisterPage = () => {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700"
+            disabled={isLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Registrarme
+            {isLoading && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
+            {isLoading ? 'Registrando...' : 'Registrarme'}
           </button>
         </form>
 
