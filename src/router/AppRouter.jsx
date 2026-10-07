@@ -1,26 +1,24 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
-import Navbar from '../components/Navbar'
 import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
+import PrivateRoutes from './PrivateRoutes'
+import PublicRoutes from './PublicRoutes'
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <div className="min-h-screen bg-slate-100">
-              <Navbar />
-              <HomePage />
-            </div>
-          }
-        />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route element={<PublicRoutes />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route element={<PrivateRoutes />}>
+          <Route path="/" element={<HomePage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
